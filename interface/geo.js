@@ -1,4 +1,5 @@
 const Router = require('koa-router')
+const geoip = require('geoip-lite');
 
 const Menu = require('../dbs/models/menu')
 const Province = require('../dbs/models/province')
@@ -9,6 +10,32 @@ const allProvince = require('../interface/utils/province.json')
 
 const router = new Router({
   prefix: '/geo'
+})
+
+
+router.get('/getPosition', async (ctx) => {
+  // const { ip } = ctx.request
+  // const geo = geoip.lookup(ip);
+  // ctx.body = {
+  //   data: geo
+  // }
+  const position = await axios.get(`https://pv.sohu.com/cityjson?ie=utf-8`);
+  if (position) {
+  // 2.把里面的数据进行过滤，例如得到广东省广州市
+    const proCity = JSON.parse(position.data.split("=")[1].split(";")[0]).cname
+    const reg = /.+?(省|市|自治区|自治州|县|区)/g
+    // 3.利用正则表达式匹配定位信息，得到一个返回身份和城市的数组
+    const [province, city] = proCity.match(reg)
+    ctx.body = { 
+      province, 
+      city 
+    }
+  } else {
+    ctx.body = {
+      province: "",
+      city: ""
+    }
+  }
 })
 
 
